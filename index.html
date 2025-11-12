@@ -174,7 +174,7 @@
       
       try {
         // 서버에 요청
-        const response = await fetch('http://localhost:3000/chat', {
+        const response = await fetch('/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ skinType })
