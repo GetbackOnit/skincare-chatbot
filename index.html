@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>피부타입 화장품 추천 챗봇</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .chatbot-container {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 500px;
+      overflow: hidden;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .chat-area {
+      height: 400px;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    
+    .message {
+      margin-bottom: 15px;
+      display: flex;
+      animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .bot-message {
+      justify-content: flex-start;
+    }
+    
+    .bot-message .text {
+      background: #e8e8e8;
+      color: #333;
+      padding: 10px 15px;
+      border-radius: 10px;
+      max-width: 70%;
+    }
+    
+    .user-message {
+      justify-content: flex-end;
+    }
+    
+    .user-message .text {
+      background: #667eea;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 10px;
+      max-width: 70%;
+    }
+    
+    .input-area {
+      padding: 20px;
+      border-top: 1px solid #e0e0e0;
+      display: flex;
+      gap: 10px;
+    }
+    
+    select, button {
+      padding: 10px 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    select {
+      flex: 1;
+      background: white;
+    }
+    
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #764ba2;
+    }
+    
+    .product-list {
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    
+    .product-item {
+      padding: 8px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+    
+    .product-item:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="chatbot-container">
+    <div class="header">
+      <h1>✨ 피부타입 화장품 추천</h1>
+      <p>당신의 피부에 맞는 화장품을 추천해드립니다</p>
+    </div>
+    
+    <div class="chat-area" id="chatArea">
+      <div class="message bot-message">
+        <div class="text">안녕하세요! 당신의 피부타입을 선택해주세요.</div>
+      </div>
+    </div>
+    
+    <div class="input-area">
+      <select id="skinType">
+        <option value="">피부타입 선택</option>
+        <option value="oily">지성</option>
+        <option value="dry">건성</option>
+        <option value="combination">복합성</option>
+        <option value="sensitive">민감성</option>
+      </select>
+      <button onclick="sendMessage()">추천받기</button>
+    </div>
+  </div>
+
+  <script>
+    const chatArea = document.getElementById('chatArea');
+    const skinTypeSelect = document.getElementById('skinType');
+    
+    async function sendMessage() {
+      const skinType = skinTypeSelect.value;
+      
+      if (!skinType) {
+        alert('피부타입을 선택해주세요');
+        return;
+      }
+      
+      // 사용자 메시지 표시
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message user-message';
+      userMsg.innerHTML = `<div class="text">${getSkinTypeLabel(skinType)}</div>`;
+      chatArea.appendChild(userMsg);
+      
+      try {
+        // 서버에 요청
+        const response = await fetch('http://localhost:3000/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ skinType })
+        });
+        
+        const data = await response.json();
+        
+        // 챗봇 응답 표시
+        const botMsg = document.createElement('div');
+        botMsg.className = 'message bot-message';
+        
+        let productHTML = '<div class="product-list">';
+        data.products.forEach(product => {
+          productHTML += `<div class="product-item"><strong>${product.name}</strong><br>${product.brand} - ₩${product.price}</div>`;
+        });
+        productHTML += '</div>';
+        
+        botMsg.innerHTML = `<div class="text">${data.message}<br>${data.advice}${productHTML}</div>`;
+        chatArea.appendChild(botMsg);
+        
+      } catch (error) {
+        console.error('Error:', error);
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'message bot-message';
+        errorMsg.innerHTML = `<div class="text">오류가 발생했습니다. 서버 연결을 확인해주세요.</div>`;
+        chatArea.appendChild(errorMsg);
+      }
+      
+      // 스크롤 하단으로
+      chatArea.scrollTop = chatArea.scrollHeight;
+    }
+    
+    function getSkinTypeLabel(type) {
+      const labels = {
+        oily: '지성',
+        dry: '건성',
+        combination: '복합성',
+        sensitive: '민감성'
+      };
+      return labels[type];
+    }
+    
+    // Enter 키로 전송
+    skinTypeSelect.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
+    });
+  </script>
+</body>
+</html>
