@@ -186,13 +186,18 @@
         const botMsg = document.createElement('div');
         botMsg.className = 'message bot-message';
         
-        let productHTML = '<div class="product-list">';
-        data.products.forEach(product => {
-          productHTML += `<div class="product-item"><strong>${product.name}</strong><br>${product.brand} - ₩${product.price}</div>`;
-        });
-        productHTML += '</div>';
+        botMsg.innerHTML = `<div class="text">${data.message}<br>${data.advice}</div>`;
         
-        botMsg.innerHTML = `<div class="text">${data.message}<br>${data.advice}${productHTML}</div>`;
+        let productHTML = document.createElement('div');
+        productHTML.className = 'product-list';
+        data.products.forEach(product => {
+          const item = document.createElement('div');
+          item.className = 'product-item';
+          item.innerHTML = `<strong>${product.name}</strong><br>${product.brand} - ₩${product.price}`;
+          productHTML.appendChild(item);
+        });
+        
+        botMsg.appendChild(productHTML);
         chatArea.appendChild(botMsg);
         
       } catch (error) {

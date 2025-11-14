@@ -1,14 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const path = require('path');  // ← 이 줄 추가
+const path = require('path');
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
-
-// ← 이 두 줄 추가
-app.use(express.static(path.join(__dirname)));
 
 const PORT = 3000;
 
@@ -16,6 +13,9 @@ const PORT = 3000;
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
+
+// 정적 파일 제공 (CSS, JS 등) - 다른 라우트 뒤에 배치
+app.use(express.static(path.join(__dirname)));
 
 // 화장품 데이터베이스
 const products = {
@@ -35,23 +35,6 @@ const products = {
   ]
 };
 
-// 챗봇 응답 엔드포인트
-app.post('/chat', (req, res) => {
-  const { skinType, concern } = req.body;
-  
-  if (!skinType || !['oily', 'dry', 'combination', 'sensitive'].includes(skinType)) {
-    return res.status(400).json({ error: '유효한 피부타입을 선택해주세요' });
-  }
-  
-  const recommended = products[skinType];
-  
-  res.json({
-    message: `${skinType} 피부를 위한 추천 제품입니다.`,
-    products: recommended,
-    advice: generateAdvice(skinType)
-  });
-});
-
 // 피부타입별 조언 생성
 function generateAdvice(skinType) {
   const advices = {
@@ -62,6 +45,32 @@ function generateAdvice(skinType) {
   };
   return advices[skinType];
 }
+
+function getSkinTypeLabel(type) {
+  const labels = {
+    oily: '지성',
+    dry: '건성',
+    combination: '복합성',
+    sensitive: '민감성'
+  };
+  return labels[type];
+}
+
+app.post('/chat', (req, res) => {
+  const { skinType, concern } = req.body;
+  
+  if (!skinType || !['oily', 'dry', 'combination', 'sensitive'].includes(skinType)) {
+    return res.status(400).json({ error: '유효한 피부타입을 선택해주세요' });
+  }
+  
+  const recommended = products[skinType];
+  
+  res.json({
+    message: `${getSkinTypeLabel(skinType)} 피부를 위한 추천 제품입니다.`,
+    products: recommended,
+    advice: generateAdvice(skinType)
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`서버가 ${PORT}번 포트에서 실행 중입니다.`);
