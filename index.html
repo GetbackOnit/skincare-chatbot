@@ -182,22 +182,32 @@
         
         const data = await response.json();
         
-        // 챗봇 응답 표시
+        // 봇 메시지 생성
         const botMsg = document.createElement('div');
         botMsg.className = 'message bot-message';
         
-        botMsg.innerHTML = `<div class="text">${data.message}<br>${data.advice}</div>`;
+        // 조언 추가 (중요!)
+        botMsg.innerHTML = `<div class="text">${data.message}<br><br><strong>💡 조언:</strong> ${data.advice}</div>`;
         
-        let productHTML = document.createElement('div');
-        productHTML.className = 'product-list';
-        data.products.forEach(product => {
-          const item = document.createElement('div');
-          item.className = 'product-item';
-          item.innerHTML = `<strong>${product.name}</strong><br>${product.brand} - ₩${product.price}`;
-          productHTML.appendChild(item);
-        });
+        // 제품 리스트 추가
+        if (data.products && data.products.length > 0) {
+          const productDiv = document.createElement('div');
+          productDiv.className = 'product-list';
+          
+          data.products.forEach(product => {
+            const item = document.createElement('div');
+            item.className = 'product-item';
+            item.innerHTML = `
+              <strong>${product.name}</strong><br>
+              ${product.brand} - ₩${product.price}<br>
+              ⭐ ${product.rating}
+            `;
+            productDiv.appendChild(item);
+          });
+          
+          botMsg.appendChild(productDiv);
+        }
         
-        botMsg.appendChild(productHTML);
         chatArea.appendChild(botMsg);
         
       } catch (error) {

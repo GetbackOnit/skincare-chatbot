@@ -12,9 +12,14 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "axios": "^1.13.2",
     "body-parser": "^2.2.0",
+    "cheerio": "^1.1.2",
     "cors": "^2.8.5",
-    "express": "^5.1.0"
+    "csv-parser": "^3.2.0",
+    "express": "^5.1.0",
+    "puppeteer": "^24.30.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
