@@ -59,7 +59,7 @@ export default function App() {
     );
   };
 
-  const API_URL = '192.168.0.9:3000';
+  const API_URL = 'skincare-chatbot-production-9ad6.up.railway.app';
 
   const handleGetRecommendation = async () => {
     if (!selectedSkinType) {
@@ -69,7 +69,7 @@ export default function App() {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://${API_URL}/chat`, {
+      const response = await fetch(`https://${API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -112,7 +112,7 @@ export default function App() {
     setMessages([...messages, userMessage]);
 
     try {
-      const response = await fetch(`http://${API_URL}/chat/message`, {
+      const response = await fetch(`https://${API_URL}/chat/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
