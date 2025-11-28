@@ -1,22 +1,25 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const path = require('path');
 const mongoose = require('mongoose');
 require('dotenv').config();
-
-// Gemini API 초기화 (없으면 null)
-let geminiModel = null;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // 이미지 폴더 정적 제공
-app.use('/images', express.static(path.join(__dirname, 'product_images')));
+app.use('/images', express.static('product_images'));
 
-// CORS 설정
-app.use(cors());
+// CORS 설정 (모든 도메인에서 요청 허용)
+app.use(cors({
+  origin: '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // ============ MongoDB 연결 ============
 mongoose.connect(process.env.MONGO_URI, {
