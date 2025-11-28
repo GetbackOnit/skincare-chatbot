@@ -59,6 +59,8 @@ export default function App() {
     );
   };
 
+  const API_URL = '192.168.0.9:3000';
+
   const handleGetRecommendation = async () => {
     if (!selectedSkinType) {
       Alert.alert('알림', '피부타입을 선택해주세요');
@@ -67,10 +69,13 @@ export default function App() {
 
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.0.9:3000/chat', {
+      const response = await fetch(`http://${API_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skinType: selectedSkinType })
+        body: JSON.stringify({ 
+          skinType: selectedSkinType,
+          preferences: selectedPreferences
+        })
       });
       
       const data = await response.json();
@@ -107,7 +112,7 @@ export default function App() {
     setMessages([...messages, userMessage]);
 
     try {
-      const response = await fetch('http://192.168.0.9:3000/chat/message', {
+      const response = await fetch(`http://${API_URL}/chat/message`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -59,10 +59,10 @@ const User = mongoose.model('User', userSchema);
 // ============ 헬퍼 함수 ============
 function generateAdvice(skinType) {
   const advices = {
-    oily: '하루 2번 클렌징과 가벼운 토너 사용을 권장합니다.',
-    dry: '보습 에센스와 크림 마스크를 정기적으로 사용하세요.',
-    combination: 'T존은 가볍게, 건조한 부위는 진하게 사용하세요.',
-    sensitive: '자극 최소화 제품부터 시작하여 천천히 라인 추가하세요.'
+    oily: '하루 2번 클렌징과 가벼운 토너 사용을 권장합니다. BHA, 티트리, 녹차 성분의 제품을 추천합니다!',
+    dry: '보습 에센스와 크림 마스크를 정기적으로 사용하세요. 그리고 히알루론산과 세라마이드 성분의 제품을 추천합니다!',
+    combination: 'T존은 가볍게, 건조한 부위는 진하게 사용하세요. BHA, 녹차 성분의 제품을 추천합니다!',
+    sensitive: '자극 최소화 제품부터 시작하여 천천히 라인 추가하세요. 센텔라, 마데카소사이드, 어성초, 티트리 성분의 제품을 추천합니다!'
   };
   return advices[skinType] || '피부타입에 맞는 제품을 선택하세요.';
 }
@@ -88,46 +88,84 @@ app.get('/', (req, res) => {
 // ============ 메인 추천 API ============
 app.post('/chat', async (req, res) => {
   try {
-    const { skinType } = req.body;
+    const { skinType, preferences } = req.body;
     
     console.log('🔍 요청받은 skinType:', skinType);
+    console.log('🔍 요청받은 preferences:', preferences);
     
-    const products = await Product.find({ skinType }).limit(5);
+    // 기본 조건: 피부타입
+    let query = { skinType };
+    
+    // 선호도에 따른 필터 추가
+    if (preferences && preferences.length > 0) {
+      const filters = [];
+      
+      preferences.forEach(pref => {
+        if (pref === 'organic') {
+          // 저가격: 30,000원 이하
+          console.log('💰 저가격 필터 적용');
+          filters.push({ price: { $lte: 30000 } });
+        } else if (pref === 'antiaging') {
+          // 안티에이징: benefit이나 name에 관련 키워드 포함
+          console.log('✨ 안티에이징 필터 적용');
+          filters.push({
+            $or: [
+              { benefit: { $regex: '탄력|주름|안티에이징|에센스', $options: 'i' } },
+              { name: { $regex: '세럼|에센스|앰플', $options: 'i' } }
+            ]
+          });
+        } else if (pref === 'hydration') {
+          // 수분보충: benefit이나 name에 보습 관련 키워드
+          console.log('💧 수분보충 필터 적용');
+          filters.push({
+            $or: [
+              { benefit: { $regex: '보습|수분|에센스', $options: 'i' } },
+              { name: { $regex: '에센스|토너|에센셜', $options: 'i' } }
+            ]
+          });
+        }
+      });
+      
+      // 모든 필터 조건을 OR로 결합 (하나라도 일치하면 표시)
+      if (filters.length > 0) {
+        query = { $and: [{ skinType }, { $or: filters }] };
+      }
+    }
+    
+    console.log('🔎 최종 쿼리:', JSON.stringify(query, null, 2));
+    
+    const products = await Product.find(query).limit(10);
     
     console.log('🔍 DB에서 찾은 제품 수:', products.length);
-    console.log('🔍 첫번째 제품의 image:', products[0]?.image);
     
     const productsWithImages = products.map(p => {
       let imageUrl = null;
       
       if (p.image) {
-        // 이미 전체 URL이면 그대로 사용
         if (p.image.startsWith('http')) {
           imageUrl = p.image;
         } else {
-          // 파일명이면 서버 URL과 결합
           imageUrl = `http://192.168.0.9:3000/images/${p.image}`;
         }
       }
-      
-      console.log('📝 변환 전:', p.image);
-      console.log('📝 변환 후:', imageUrl);
       
       return {
         id: p._id,
         name: p.name,
         brand: p.brand,
         price: p.price,
-        image: imageUrl || null,  // null이 아니면 URL
+        image: imageUrl || null,
         rating: p.rating
       };
     });
     
-    console.log('📦 최종 반환 제품:', productsWithImages);
+    console.log('📦 최종 반환 제품:', productsWithImages.length);
+    
+    const advice = generateAdvice(skinType);
     
     res.json({
       message: `피부를 위한 추천 제품입니다!`,
-      advice: '올리브영에서 엄선한 최고의 제품들입니다.',
+      advice: advice,
       products: productsWithImages
     });
   } catch (error) {
@@ -200,5 +238,5 @@ ${productInfo}
 
 // ============ 서버 시작 ============
 app.listen(PORT, () => {
-  console.log(`✅ 서버가 포트 ${PORT}에서 실행 중입니다.`);
+  console.log(`Server running on port ${PORT}`);
 });

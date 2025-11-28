@@ -1,27 +1,17 @@
 {
-  "name": "skincare-chatbot",
+  "name": "skincare-chatbot-app",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "main": "expo-router/entry",
   "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
-    "axios": "^1.13.2",
-    "body-parser": "^2.2.0",
-    "cheerio": "^1.1.2",
-    "cors": "^2.8.5",
-    "csv-parser": "^3.2.0",
-    "express": "^5.1.0",
-    "puppeteer": "^24.30.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.11"
+    "expo": "^51.0.0",
+    "expo-router": "^3.4.0",
+    "react": "^18.2.0",
+    "react-native": "^0.74.0"
   }
 }
