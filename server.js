@@ -148,7 +148,7 @@ app.post('/chat', async (req, res) => {
         if (p.image.startsWith('http')) {
           imageUrl = p.image;
         } else {
-          imageUrl = `http://192.168.0.9:3000/images/${p.image}`;
+          imageUrl = `https://skincare-chatbot-production-9ad6.up.railway.app/images/${p.image}`;
         }
       }
       
