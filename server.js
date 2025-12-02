@@ -22,14 +22,22 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // ============ MongoDB 연결 ============
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
-  console.log('✅ MongoDB 연결 성공');
-}).catch(err => {
-  console.error('❌ MongoDB 연결 실패:', err);
-});
+const MONGO_URI = process.env.MONGO_URI;
+
+console.log('🔍 MONGO_URI:', MONGO_URI ? '설정됨 ✅' : '설정 안 됨 ❌');
+
+if (!MONGO_URI) {
+  console.error('❌ MONGO_URI 환경변수가 설정되지 않았습니다!');
+} else {
+  mongoose.connect(MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  }).then(() => {
+    console.log('✅ MongoDB 연결 성공');
+  }).catch(err => {
+    console.error('❌ MongoDB 연결 실패:', err);
+  });
+}
 
 // ============ MongoDB 스키마 ============
 const productSchema = new mongoose.Schema({
@@ -89,6 +97,79 @@ app.get('/', (req, res) => {
 });
 
 // ============ 메인 추천 API ============
+app.get('/chat', async (req, res) => {
+  try {
+    // 기본값으로 건성 피부 + 수분보충 선호
+    const skinType = req.query.skinType || 'dry';
+    const preferences = req.query.preferences ? req.query.preferences.split(',') : [];
+    
+    console.log('🔍 요청받은 skinType:', skinType);
+    console.log('🔍 요청받은 preferences:', preferences);
+    
+    let query = { skinType };
+    
+    if (preferences && preferences.length > 0) {
+      const filters = [];
+      
+      preferences.forEach(pref => {
+        if (pref === 'organic') {
+          filters.push({ price: { $lte: 30000 } });
+        } else if (pref === 'antiaging') {
+          filters.push({
+            $or: [
+              { benefit: { $regex: '탄력|주름|안티에이징|에센스', $options: 'i' } },
+              { name: { $regex: '세럼|에센스|앰플', $options: 'i' } }
+            ]
+          });
+        } else if (pref === 'hydration') {
+          filters.push({
+            $or: [
+              { benefit: { $regex: '보습|수분|에센스', $options: 'i' } },
+              { name: { $regex: '에센스|토너|에센셜', $options: 'i' } }
+            ]
+          });
+        }
+      });
+      
+      if (filters.length > 0) {
+        query = { $and: [{ skinType }, { $or: filters }] };
+      }
+    }
+    
+    const products = await Product.find(query).limit(10);
+    
+    const productsWithImages = products.map(p => {
+      let imageUrl = null;
+      if (p.image) {
+        if (p.image.startsWith('http')) {
+          imageUrl = p.image;
+        } else {
+          imageUrl = `https://skincare-chatbot-production-9ad6.up.railway.app/images/${p.image}`;
+        }
+      }
+      return {
+        id: p._id,
+        name: p.name,
+        brand: p.brand,
+        price: p.price,
+        image: imageUrl || null,
+        rating: p.rating
+      };
+    });
+    
+    const advice = generateAdvice(skinType);
+    
+    res.json({
+      message: `피부를 위한 추천 제품입니다!`,
+      advice: advice,
+      products: productsWithImages
+    });
+  } catch (error) {
+    console.error('❌ 에러:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/chat', async (req, res) => {
   try {
     const { skinType, preferences } = req.body;
